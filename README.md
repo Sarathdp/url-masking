@@ -16,5 +16,5 @@ A professional tool for creating masked URLs with redirection capabilities.
 
 ## Installation
 ```bash
-git clone https://github.com/your-username/url-masking-tool.git
-cd url-masking-tool
+git clone https://github.com/sarathdp/url-masking.git
+cd url-masking
