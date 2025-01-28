@@ -1,0 +1,2 @@
+# Requirements (even though we use standard libraries)
+python>=3.6
