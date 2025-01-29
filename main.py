@@ -1,78 +1,143 @@
+#mask: The  URL Masking Tool
+
+import pyshorteners
 from urllib.parse import urlparse
+import re 
 
-def show_banner():
-    print("""\033[94m
-    **************************************
-    *                                    *
-    *      SARATH's URL MASKING TOOL     *
-    *                                    *
-    **************************************
-    \033[0m""")
+VERSION = '1.0'
 
-def validate_url(url):
-    parsed = urlparse(url)
-    return parsed.scheme in ('http', 'https') and parsed.netloc
+R = '\033[31m'  # red
+G = '\033[32m'  # green
+C = '\033[36m'  # cyan
+W = '\033[0m'   # white
+Y = '\033[33m'  # yellow
 
-def main():
-    show_banner()
+
+banner = r'''
+      ███╗   ███╗ █████╗ ███████╗██╗  ██╗
+      ████╗ ████║██╔══██╗██╔════╝██║  ██║
+      ██╔████╔██║███████║███████╗███████║
+      ██║╚██╔╝██║██╔══██║╚════██║██╔══██║
+      ██║ ╚═╝ ██║██║  ██║███████║██║  ██║
+      ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+       MASKING THE URL
+       
+       '''
+
+def print_banners():
+    """
+    prints the program banners
+    """
+    print(f'{R}{banner}{W}\n')
+    print(f'{G}╰➤ {C}Version      : {W}{VERSION}')
+    print(f'{G}╰➤ {C}Creator      : {W}sarath')
     
-    # Get original URL
-    original_url = input("\n\033[93m[+] Paste the URL to mask: \033[0m").strip()
-    if not validate_url(original_url):
-        print("\033[91m[!] Invalid URL. Please include http:// or https:// and a valid domain.\033[0m")
-        return
 
-    # Subdomain configuration
-    use_sub = input("\n\033[93m[+] Use a subdomain? (y/n): \033[0m").lower()
-    subdomain = ''
-    if use_sub == 'y':
-        subdomain = input("\033[93m[+] Enter subdomain name (without parent domain): \033[0m").strip()
+################
+print_banners()
 
-    # Domain configuration
-    domain = input("\n\033[93m[+] Enter main domain name (e.g., example.com): \033[0m").strip()
+# Initialize the URL shorteners
+s = pyshorteners.Shortener()
 
-    # Path configuration
-    path = input("\n\033[93m[+] Enter optional URL path (e.g., 'redirect' or leave empty): \033[0m").strip()
-    if path:
-        path = '/' + path.lstrip('/')
+# Add the additional URL shortener to the list
+shorteners = [
+    s.tinyurl,
+    s.dagd,
+    s.clckru,
+    s.osdb,
+]
 
-    # Protocol selection
-    protocol = 'https' if input("\n\033[93m[+] Use HTTPS for masked URL? (y/n): \033[0m").lower() == 'y' else 'http'
+# Input validation functions
+def validate_web_url(url):
+    url_pattern = re.compile(
+    r'^(https?://)'  # starts with 'https://'
+    r'([a-zA-Z0-9-]+\.)*'  # optional subdomains
+    r'([a-zA-Z]{2,})'  # domain
+    r'(:\d{1,5})?'  # optional port
+    r'(/.*)?$')
 
-    # Build masked URL
-    masked_domain = f"{subdomain}.{domain}" if subdomain else domain
-    masked_url = f"{protocol}://{masked_domain}{path}"
+    if not url_pattern.match(url):
+        raise ValueError("Invalid URL format. Please provide a valid web URL.")
 
-    # Generate HTML redirect content
-    html_content = f"""<html>
-<head>
-    <meta http-equiv="refresh" content="0; url='{original_url}'" />
-    <title>Redirecting...</title>
-</head>
-<body>
-    <p>Redirecting to <a href="{original_url}">original content</a>...</p>
-</body>
-</html>"""
+def validate_custom_domain(domain):
+    domain_pattern = re.compile(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
-    # Save HTML file
-    filename = "masked_redirect.html"
-    with open(filename, 'w') as f:
-        f.write(html_content)
+    if not domain_pattern.match(domain):
+        raise ValueError("Invalid custom domain. Please provide a valid domain name.")
 
-    # Output instructions
-    print("\n\033[92m" + "="*50)
-    print(f"   Masked URL successfully created: {masked_url}")
-    print("="*50 + "\033[0m")
-    print(f"\n\033[95mGenerated HTML file:\033[0m \033[93m{filename}\033[0m")
-    print("\n\033[95mDeployment Instructions:\033[0m")
-    print(f"\033[96m1. Host {filename} on your web server at: {path or '/'}")
-    print(f"2. Configure DNS for {masked_domain} to point to your server")
-    print(f"3. Test by visiting: {masked_url}\033[0m")
-    print("\n\033[91mNote: Actual redirection requires proper web server configuration!\033[0m")
+def format_phish_keywords(keywords):
+    max_length = 15
+    if not isinstance(keywords, str):
+        raise TypeError("Input must be a string.")
 
-    print("\n\033[95m" + "¯" * 50)
-    print(" Thank you for using Sarath's URL Masking Tool! ")
-    print("¯" * 50 + "\033[0m")
+    if " " in phish:
+        raise TypeError("Phishing keywords should not contain spaces. Use '-' to separate them.")
 
-if __name__ == "__main__":
-    main()
+    if len(keywords) > max_length:
+        raise ValueError("Input string exceeds the maximum allowed length.")
+
+    return "-".join(keywords.split())
+
+# Input from the user with validation
+try:
+    while True:
+        web_url = input(f"{G}Enter the original link {W}(ex:www.phishing link ): {W}")
+        try:
+            validate_web_url(web_url)
+            break
+        except ValueError as e:
+            print(e)
+
+    while True:
+        custom_domain = input(f"\n{Y}Enter your custom domain {W}(ex: gmail.com): {W}")
+        try:
+            validate_custom_domain(custom_domain)
+            break
+        except ValueError as e:
+            print(e)
+
+    while True:
+        phish = input(f"\n{C}Enter phishing keywords {W}(ex: free-stuff, login): {W}")
+        try:
+            phish = format_phish_keywords(phish)
+            break
+        except TypeError as e:
+            print(e)
+
+    # Prepare the data for the request
+    data = {
+        'url': web_url,
+        'shorturl': '',
+    }
+
+    # Shorten the original URL with multiple URL shorteners
+    short_urls = []
+    for i, shortener in enumerate(shorteners):
+        try:
+            short_url = shortener.short(web_url)
+            short_urls.append(short_url)
+        except pyshorteners.exceptions.ShorteningErrorException as e:
+            print(f"{R}Error shortening URL with Shortener {i + 1}: {W}{str(e)}")
+            continue
+        except Exception as e:
+            print(f"{R}An unexpected error occurred with Shortener {i + 1}: {W}{str(e)}")
+            continue
+
+    # Mask the URLs with custom domain and phishing keywords
+    def mask_url(domain, keyword, url):
+        # Use urlparse to properly split the URL
+        parsed_url = urlparse(url)
+
+        # Reconstruct the URL with the custom domain and phishing keyword
+        return f"{parsed_url.scheme}://{domain}-{keyword}@{parsed_url.netloc}{parsed_url.path}"
+
+    # Print the results
+    print(f"\n{Y}Original URL:{W}", web_url, "\n")
+    print(f"{G}[~] {R}Masked URL (using multiple shorteners):{W}")
+    for i, short_url in enumerate(short_urls):
+        masked_url = mask_url(custom_domain, phish, short_url)
+        print(f"{G}╰➤ {C}Shortener {W} {i + 1}: {masked_url}")
+
+
+except Exception as e:
+    print(f"{R}An error occurred: {W}{str(e)}")
